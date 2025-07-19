@@ -1,0 +1,17 @@
+# Python virtual environment
+# This folder contains all the installed libraries and can be very large.
+# It should always be ignored, as others can reinstall from requirements.txt.
+/venv/
+
+# Data files
+# It's generally bad practice to upload large raw data files to Git.
+# The README should point to the original data sources instead.
+/data/
+
+# System-specific files
+# Ignore files created by operating systems like macOS or Windows.
+.DS_Store
+Thumbs.db
+
+# VS Code specific settings
+.vscode/
