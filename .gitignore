@@ -1,9 +1,6 @@
 # Python virtual environment
 /venv/
 
-# Data files
-/data/
-
 # Trained models can be very large and should not be tracked
 /models/
 
