@@ -10,7 +10,7 @@ Thumbs.db
 
 # Model files (large files that should be regenerated locally)
 models/*.pkl
-models/*.keras
+# models/*.keras  # Commented out to allow lstm_model.keras in git
 models/*.h5
 
 # Python cache
