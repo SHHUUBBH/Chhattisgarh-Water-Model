@@ -8,9 +8,11 @@ Thumbs.db
 # VS Code specific settings
 .vscode/
 
-# Model files (large files that should be regenerated locally)
+# Model files (excluding the LSTM model files for deployment)
 models/*.pkl
-# models/*.h5  # Commented out to allow lstm_model.h5 in git
+# Allow LSTM model files for deployment:
+# models/*.h5
+# models/*.json
 models/*.keras
 
 # Python cache

@@ -120,19 +120,19 @@ X_test, y_test = create_sequences(test_weekly_scaled, n_steps)
 
 print(f"Training sequences: {X_train.shape}, Test sequences: {X_test.shape}")
 
-# Build LSTM model - using legacy format for better compatibility
+# Build LSTM model - SIMPLEST possible approach
 from tensorflow.keras.layers import Input
 from tensorflow.keras.models import Model
 
 n_features = X_train.shape[2]
 
-# Use functional API for better compatibility
-inputs = Input(shape=(n_steps, n_features))
-x = LSTM(50, activation='relu', return_sequences=True)(inputs)
-x = LSTM(50, activation='relu')(x)
-outputs = Dense(1)(x)
+# Build with Functional API - cleanest approach
+inputs = Input(shape=(n_steps, n_features), name='input_layer')
+x = LSTM(50, activation='relu', return_sequences=True, name='lstm_1')(inputs)
+x = LSTM(50, activation='relu', name='lstm_2')(x)
+outputs = Dense(1, name='output_layer')(x)
 
-model = Model(inputs=inputs, outputs=outputs)
+model = Model(inputs=inputs, outputs=outputs, name='water_storage_model')
 model.compile(optimizer='adam', loss='mean_squared_error')
 
 # Train the model
@@ -156,9 +156,22 @@ print("\n[5/5] Saving model...")
 # Create models directory if it doesn't exist
 os.makedirs('models', exist_ok=True)
 
-# Save LSTM model in H5 format for better compatibility
+# Save model architecture and weights separately for maximum compatibility
+import json
+
+# Save architecture as JSON
+model_json = model.to_json()
+with open('models/lstm_model_architecture.json', 'w') as json_file:
+    json_file.write(model_json)
+print("✓ Model architecture saved to models/lstm_model_architecture.json")
+
+# Save weights only
+model.save_weights('models/lstm_model_weights.h5')
+print("✓ Model weights saved to models/lstm_model_weights.h5")
+
+# Also save complete model for backward compatibility
 model.save('models/lstm_model.h5', save_format='h5')
-print("✓ LSTM model saved to models/lstm_model.h5")
+print("✓ Complete model saved to models/lstm_model.h5")
 
 # --- 7. Quick validation ---
 print("\n" + "=" * 70)
