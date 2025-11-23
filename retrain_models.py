@@ -120,16 +120,19 @@ X_test, y_test = create_sequences(test_weekly_scaled, n_steps)
 
 print(f"Training sequences: {X_train.shape}, Test sequences: {X_test.shape}")
 
-# Build LSTM model with compatible parameters
-n_features = X_train.shape[2]
-model = Sequential([
-    LSTM(50, activation='relu', return_sequences=True),
-    LSTM(50, activation='relu'),
-    Dense(1)
-])
+# Build LSTM model - using legacy format for better compatibility
+from tensorflow.keras.layers import Input
+from tensorflow.keras.models import Model
 
-# Build the model by calling it once
-model.build(input_shape=(None, n_steps, n_features))
+n_features = X_train.shape[2]
+
+# Use functional API for better compatibility
+inputs = Input(shape=(n_steps, n_features))
+x = LSTM(50, activation='relu', return_sequences=True)(inputs)
+x = LSTM(50, activation='relu')(x)
+outputs = Dense(1)(x)
+
+model = Model(inputs=inputs, outputs=outputs)
 model.compile(optimizer='adam', loss='mean_squared_error')
 
 # Train the model
@@ -153,9 +156,9 @@ print("\n[5/5] Saving model...")
 # Create models directory if it doesn't exist
 os.makedirs('models', exist_ok=True)
 
-# Save LSTM model
-model.save('models/lstm_model.keras')
-print("✓ LSTM model saved to models/lstm_model.keras")
+# Save LSTM model in H5 format for better compatibility
+model.save('models/lstm_model.h5', save_format='h5')
+print("✓ LSTM model saved to models/lstm_model.h5")
 
 # --- 7. Quick validation ---
 print("\n" + "=" * 70)
@@ -164,7 +167,7 @@ print("=" * 70)
 
 try:
     from tensorflow.keras.models import load_model
-    lstm_loaded = load_model('models/lstm_model.keras')
+    lstm_loaded = load_model('models/lstm_model.h5')
     print("✓ LSTM model loads successfully")
     print(f"  Model input shape: {lstm_loaded.input_shape}")
     print(f"  Model output shape: {lstm_loaded.output_shape}")

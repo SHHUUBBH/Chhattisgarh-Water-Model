@@ -95,24 +95,19 @@ def load_models():
     sarima_model = None  # Disabled due to dependency conflicts
     
     lstm_model = None
-    model_path = 'models/lstm_model.keras'
+    model_path = 'models/lstm_model.h5'  # Using H5 format for better compatibility
     
-    # Debug: Check if file exists
     if not os.path.exists(model_path):
         st.warning(f"⚠️ LSTM model could not be loaded. Run 'python retrain_models.py' to create the model.")
-        st.info(f"Debug: Looking for model at: {os.path.abspath(model_path)}")
-        st.info(f"Debug: Files in models/: {os.listdir('models/') if os.path.exists('models/') else 'models/ folder not found'}")
         return sarima_model, None
     
     try:
-        lstm_model = load_model(model_path)
+        lstm_model = load_model(model_path, compile=False)
+        lstm_model.compile(optimizer='adam', loss='mean_squared_error')
         st.success("✅ LSTM model loaded successfully!")
     except Exception as e:
-        # Handle all exceptions including TF/Keras version mismatch
         error_msg = str(e)
         st.warning(f"⚠️ LSTM model could not be loaded. Error: {error_msg}")
-        if "batch_shape" in error_msg or "deserializing" in error_msg:
-            st.info("💡 This appears to be a TensorFlow/Keras version compatibility issue. Run 'python retrain_models.py' to retrain.")
         lstm_model = None
     
     return sarima_model, lstm_model
