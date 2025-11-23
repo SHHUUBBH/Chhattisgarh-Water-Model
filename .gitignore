@@ -1,12 +1,22 @@
 # Python virtual environment
 /venv/
 
-# Trained models can be very large and should not be tracked
-/models/
-
 # System-specific files
 .DS_Store
 Thumbs.db
 
 # VS Code specific settings
 .vscode/
+
+# Model files (large files that should be regenerated locally)
+models/*.pkl
+models/*.keras
+models/*.h5
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Jupyter Notebook
+.ipynb_checkpoints

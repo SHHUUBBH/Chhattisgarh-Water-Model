@@ -89,15 +89,23 @@ def load_and_process_data():
 def load_models():
     """
     Loads the trained models from the 'models/' folder.
+    Note: SARIMA model is not used due to pmdarima/numpy compatibility issues.
+    LSTM model provides better accuracy for this dataset.
     """
-    try:
-        sarima_model = joblib.load('models/sarima_model.pkl')
-    except FileNotFoundError:
-        sarima_model = None
+    sarima_model = None  # Disabled due to dependency conflicts
+    
+    lstm_model = None
     try:
         lstm_model = load_model('models/lstm_model.keras')
-    except (FileNotFoundError, IOError):
+    except Exception as e:
+        # Handle all exceptions including TF/Keras version mismatch
+        error_msg = str(e)
+        if "batch_shape" in error_msg or "deserializing" in error_msg:
+            st.warning("⚠️ LSTM model has TensorFlow/Keras version compatibility issues. Run 'python retrain_models.py' to retrain.")
+        elif "FileNotFoundError" not in str(type(e)):
+            st.warning(f"⚠️ LSTM model could not be loaded. Run 'python retrain_models.py' to create the model.")
         lstm_model = None
+    
     return sarima_model, lstm_model
 
 # --- Main App ---
@@ -149,21 +157,27 @@ if df_weekly is not None:
     col2.metric("Latest Rainfall", f"{latest_data['Rainfall_mm']:.2f} mm")
     col3.metric("Latest Temperature", f"{latest_data['Temp_C']:.1f} °C")
     
-    st.header("2024 Forecast vs. Actual Storage")
-    
-    plot_df = pd.DataFrame({'Actual': test_df['Storage_BCM']})
-    if sarima_forecast_series is not None:
-        plot_df['SARIMA Forecast'] = sarima_forecast_series
-    if lstm_forecast_series is not None:
-        plot_df['LSTM Forecast'] = lstm_forecast_series
-    
-    fig_forecast = px.line(plot_df, title="Model Forecasts vs. Actual Weekly Storage", labels={'value': 'Storage (BCM)', 'Date': 'Week'})
-    fig_forecast.update_traces(selector=dict(name='Actual'), line=dict(width=3))
-    if 'SARIMA Forecast' in plot_df:
-        fig_forecast.update_traces(selector=dict(name='SARIMA Forecast'), line=dict(dash='dash'))
-    if 'LSTM Forecast' in plot_df:
-        fig_forecast.update_traces(selector=dict(name='LSTM Forecast'), line=dict(dash='dot'))
-    st.plotly_chart(fig_forecast, use_container_width=True)
+    # Only show forecast section if we have test data and at least one model
+    if len(test_df) > 0 and (sarima_forecast_series is not None or lstm_forecast_series is not None):
+        st.header("2024 Forecast vs. Actual Storage")
+        
+        plot_df = pd.DataFrame({'Actual': test_df['Storage_BCM']})
+        if sarima_forecast_series is not None:
+            plot_df['SARIMA Forecast'] = sarima_forecast_series
+        if lstm_forecast_series is not None:
+            plot_df['LSTM Forecast'] = lstm_forecast_series
+        
+        fig_forecast = px.line(plot_df, title="Model Forecasts vs. Actual Weekly Storage", labels={'value': 'Storage (BCM)', 'Date': 'Week'})
+        fig_forecast.update_traces(selector=dict(name='Actual'), line=dict(width=3))
+        if 'SARIMA Forecast' in plot_df:
+            fig_forecast.update_traces(selector=dict(name='SARIMA Forecast'), line=dict(dash='dash'))
+        if 'LSTM Forecast' in plot_df:
+            fig_forecast.update_traces(selector=dict(name='LSTM Forecast'), line=dict(dash='dot'))
+        st.plotly_chart(fig_forecast, use_container_width=True)
+    elif len(test_df) > 0:
+        st.info("📊 Forecast models are not available. Showing historical data only.")
+    else:
+        st.info("📊 No 2024 data available for forecasting comparison.")
 
     st.header("Historical Data Explorer")
     
