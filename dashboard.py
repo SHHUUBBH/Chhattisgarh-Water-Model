@@ -89,46 +89,37 @@ def load_and_process_data():
 def load_models():
     """
     Loads the trained models from the 'models/' folder.
-    Uses architecture + weights loading for maximum compatibility.
+    Builds model structure manually and loads only weights for compatibility.
     """
-    from tensorflow.keras.models import model_from_json
-    import json
+    from tensorflow.keras.models import Model
+    from tensorflow.keras.layers import Input, LSTM, Dense
     
     sarima_model = None  # Disabled due to dependency conflicts
     lstm_model = None
     
-    # Try loading from architecture + weights (most compatible)
-    arch_path = 'models/lstm_model_architecture.json'
     weights_path = 'models/lstm_model_weights.h5'
     
-    if os.path.exists(arch_path) and os.path.exists(weights_path):
+    if os.path.exists(weights_path):
         try:
-            # Load architecture
-            with open(arch_path, 'r') as json_file:
-                model_json = json_file.read()
-            lstm_model = model_from_json(model_json)
+            # Build model structure manually (avoids all serialization issues)
+            inputs = Input(shape=(4, 5), name='input_layer')
+            x = LSTM(50, activation='relu', return_sequences=True, name='lstm_1')(inputs)
+            x = LSTM(50, activation='relu', name='lstm_2')(x)
+            outputs = Dense(1, name='output_layer')(x)
             
-            # Load weights
+            lstm_model = Model(inputs=inputs, outputs=outputs, name='water_storage_model')
+            
+            # Load only the weights
             lstm_model.load_weights(weights_path)
             lstm_model.compile(optimizer='adam', loss='mean_squared_error')
-            st.success("✅ LSTM model loaded successfully (architecture + weights)!")
+            
+            st.success("✅ LSTM model loaded successfully!")
             return sarima_model, lstm_model
         except Exception as e:
-            st.warning(f"⚠️ Could not load from architecture+weights: {e}")
+            st.error(f"❌ Error loading LSTM weights: {e}")
+            return sarima_model, None
     
-    # Fallback: try loading complete H5 model
-    model_path = 'models/lstm_model.h5'
-    if os.path.exists(model_path):
-        try:
-            from tensorflow.keras.models import load_model
-            lstm_model = load_model(model_path, compile=False)
-            lstm_model.compile(optimizer='adam', loss='mean_squared_error')
-            st.success("✅ LSTM model loaded successfully (H5 format)!")
-            return sarima_model, lstm_model
-        except Exception as e:
-            st.warning(f"⚠️ LSTM model could not be loaded: {e}")
-    
-    st.warning("⚠️ No LSTM model found. Run 'python retrain_models.py' to create the model.")
+    st.warning("⚠️ No LSTM model weights found. Run 'python retrain_models.py' to create the model.")
     return sarima_model, None
 
 # --- Main App ---
