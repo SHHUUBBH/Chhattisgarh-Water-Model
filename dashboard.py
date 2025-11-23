@@ -97,12 +97,15 @@ def load_models():
     lstm_model = None
     try:
         lstm_model = load_model('models/lstm_model.keras')
+    except FileNotFoundError:
+        st.info("ℹ️ LSTM model not found. The model needs to be trained first. Run 'python retrain_models.py' locally to generate the model file.")
+        lstm_model = None
     except Exception as e:
         # Handle all exceptions including TF/Keras version mismatch
         error_msg = str(e)
         if "batch_shape" in error_msg or "deserializing" in error_msg:
             st.warning("⚠️ LSTM model has TensorFlow/Keras version compatibility issues. Run 'python retrain_models.py' to retrain.")
-        elif "FileNotFoundError" not in str(type(e)):
+        else:
             st.warning(f"⚠️ LSTM model could not be loaded. Run 'python retrain_models.py' to create the model.")
         lstm_model = None
     
