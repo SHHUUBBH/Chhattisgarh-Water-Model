@@ -92,6 +92,7 @@ def load_models():
     Note: SARIMA model is not used due to pmdarima/numpy compatibility issues.
     LSTM model provides better accuracy for this dataset.
     """
+    import tensorflow as tf
     sarima_model = None  # Disabled due to dependency conflicts
     
     lstm_model = None
@@ -102,7 +103,13 @@ def load_models():
         return sarima_model, None
     
     try:
-        lstm_model = load_model(model_path, compile=False)
+        # Load with custom objects to handle legacy parameters
+        custom_objects = {
+            'time_major': False,  # Handle legacy parameter
+        }
+        with tf.keras.utils.custom_object_scope(custom_objects):
+            lstm_model = load_model(model_path, compile=False, custom_objects=custom_objects)
+        
         lstm_model.compile(optimizer='adam', loss='mean_squared_error')
         st.success("✅ LSTM model loaded successfully!")
     except Exception as e:
