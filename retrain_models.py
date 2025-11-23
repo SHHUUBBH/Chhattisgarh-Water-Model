@@ -120,12 +120,16 @@ X_test, y_test = create_sequences(test_weekly_scaled, n_steps)
 
 print(f"Training sequences: {X_train.shape}, Test sequences: {X_test.shape}")
 
-# Build LSTM model
+# Build LSTM model with compatible parameters
 n_features = X_train.shape[2]
-model = Sequential()
-model.add(LSTM(50, activation='relu', return_sequences=True, input_shape=(n_steps, n_features)))
-model.add(LSTM(50, activation='relu'))
-model.add(Dense(1))
+model = Sequential([
+    LSTM(50, activation='relu', return_sequences=True),
+    LSTM(50, activation='relu'),
+    Dense(1)
+])
+
+# Build the model by calling it once
+model.build(input_shape=(None, n_steps, n_features))
 model.compile(optimizer='adam', loss='mean_squared_error')
 
 # Train the model
